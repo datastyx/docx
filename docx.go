@@ -52,15 +52,17 @@ type ReplaceDocx struct {
 	links     string
 	headers   map[string]string
 	footers   map[string]string
+	customXML map[string]string
 }
 
 func (r *ReplaceDocx) Editable() *Docx {
 	return &Docx{
-		files:   r.zipReader.files(),
-		content: r.content,
-		links:   r.links,
-		headers: r.headers,
-		footers: r.footers,
+		files:     r.zipReader.files(),
+		content:   r.content,
+		links:     r.links,
+		headers:   r.headers,
+		footers:   r.footers,
+		customXML: r.customXML,
 	}
 }
 
@@ -69,11 +71,12 @@ func (r *ReplaceDocx) Close() error {
 }
 
 type Docx struct {
-	files   []*zip.File
-	content string
-	links   string
-	headers map[string]string
-	footers map[string]string
+	files     []*zip.File
+	content   string
+	links     string
+	headers   map[string]string
+	footers   map[string]string
+	customXML map[string]string
 }
 
 func (d *Docx) ReplaceRaw(oldString string, newString string, num int) {
@@ -203,8 +206,13 @@ func ReadDocx(reader ZipData) (*ReplaceDocx, error) {
 		return nil, err
 	}
 
+	customXML, err := readCustomXML(reader.files())
+	if err != nil {
+		return nil, err
+	}
+
 	headers, footers, _ := readHeaderFooter(reader.files())
-	return &ReplaceDocx{zipReader: reader, content: content, links: links, headers: headers, footers: footers}, nil
+	return &ReplaceDocx{zipReader: reader, content: content, links: links, headers: headers, footers: footers, customXML: customXML}, nil
 }
 
 func readHeaderFooter(files []*zip.File) (headerText map[string]string, footerText map[string]string, err error) {
@@ -280,6 +288,27 @@ func readLinks(files []*zip.File) (text string, err error) {
 	return
 }
 
+// readCustomXML returns a map with key values being a path to a customXML file and the map value the respective content as a string
+func readCustomXML(files []*zip.File) (text map[string]string, err error) {
+	var documentFiles []*zip.File
+	documentFiles, err = retrieveCustomXMLItemFiles(files)
+	if err != nil {
+		return text, err
+	}
+	text = make(map[string]string, len(documentFiles))
+	// add each customXML file in a map
+	for _, customXMLFile := range documentFiles {
+		var documentReader io.ReadCloser
+		documentReader, err = customXMLFile.Open()
+		if err != nil {
+			return text, err
+		}
+
+		text[customXMLFile.Name], err = wordDocToString(documentReader)
+	}
+	return
+}
+
 func wordDocToString(reader io.Reader) (string, error) {
 	b, err := ioutil.ReadAll(reader)
 	if err != nil {
@@ -309,6 +338,16 @@ func retrieveLinkDoc(files []*zip.File) (file *zip.File, err error) {
 	if file == nil {
 		err = errors.New("document.xml.rels file not found")
 	}
+	return
+}
+func retrieveCustomXMLItemFiles(files []*zip.File) (customXMLItemfiles []*zip.File, err error) {
+
+	for _, f := range files {
+		if !strings.HasPrefix(f.Name, "customXml/itemProps") && strings.HasPrefix(f.Name, "customXml/item") && strings.HasSuffix(f.Name, ".xml") {
+			customXMLItemfiles = append(customXMLItemfiles, f)
+		}
+	}
+	// there might not be any customXMLfiles
 	return
 }
 

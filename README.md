@@ -1,10 +1,10 @@
-## Simple Google Go (golang) library for replace text in microsoft word (.docx) file
+## Simple golang library to replace text in WordprocessingML Office Open XML Format(.docx) files
 
 The following constitutes the bare minimum required to replace text in DOCX document.
 ``` go
 
 import (
-	"github.com/nguyenthenguyen/docx"
+	"github.com/datastyx/docx"
 )
 
 func main() {
@@ -35,4 +35,33 @@ func main() {
 	r.Close()
 }
 
+```
+
+This fork's main goal is to add two functionalities to nguyenthenguyen/docx library :
+1. adds functionality to remove WordprocessingML content based on an XPath referencing the nodes to be removed, and;
+``` go
+// parse OPC
+rodoc, err := docx.ReadDocxFile("./template.docx")
+if err != nil {
+	panic(err)
+}
+docx := rodoc.Editable()
+err = docx.RemoveElementsFromMainDocument(someXPath)
+if err != nil {
+	panic(err)
+}
+```
+
+2. Remove CustomXML Parts based on a path referencing it, the paths root shall be the root of the OPC container e.g. 'customXml/item1.xml'.
+``` go
+// parse OPC
+rodoc, err := docx.ReadDocxFile("./template.docx")
+if err != nil {
+	panic(err)
+}
+docx := rodoc.Editable()
+err = docx.RemoveCustomXML("customXml/item1.xml")
+if err != nil {
+	panic(err)
+}
 ```

@@ -10,7 +10,7 @@ import (
 const testFile = "./TestDocument.docx"
 const testFileResult = "./TestDocumentResult.docx"
 
-func loadFile(file string) *Docx {
+func LoadFile(file string) *Docx {
 	r, err := ReadDocxFile(file)
 	if err != nil {
 		panic(err)
@@ -39,7 +39,7 @@ func TestReadDocxFromMemory(t *testing.T) {
 	d.Replace("document.", "line1\r\nline2", 1)
 	d.WriteToFile(testFileResult)
 
-	d = loadFile(testFileResult)
+	d = LoadFile(testFileResult)
 
 	if strings.Contains(d.content, "This is a word document") {
 		t.Error("Missing 'This is a word document.', got ", d.content)
@@ -48,11 +48,11 @@ func TestReadDocxFromMemory(t *testing.T) {
 }
 
 func TestReplace(t *testing.T) {
-	d := loadFile(testFile)
+	d := LoadFile(testFile)
 	d.Replace("document.", "line1\r\nline2", 1)
 	d.WriteToFile(testFileResult)
 
-	d = loadFile(testFileResult)
+	d = LoadFile(testFileResult)
 
 	if strings.Contains(d.content, "This is a word document") {
 		t.Error("Missing 'This is a word document.', got ", d.content)
@@ -64,11 +64,11 @@ func TestReplace(t *testing.T) {
 }
 
 func TestReplaceLink(t *testing.T) {
-	d := loadFile(testFile)
+	d := LoadFile(testFile)
 	d.ReplaceLink("http://example.com/", "https://github.com/nguyenthenguyen/docx", -1)
 	d.WriteToFile(testFileResult)
 
-	d = loadFile(testFileResult)
+	d = LoadFile(testFileResult)
 
 	if strings.Contains(d.links, "http://example.com") {
 		t.Error("Missing 'http://example.com', got ", d.links)
@@ -80,11 +80,11 @@ func TestReplaceLink(t *testing.T) {
 }
 
 func TestReplaceHeader(t *testing.T) {
-	d := loadFile(testFile)
+	d := LoadFile(testFile)
 	d.ReplaceHeader("This is a header.", "newHeader")
 	d.WriteToFile(testFileResult)
 
-	d = loadFile(testFileResult)
+	d = LoadFile(testFileResult)
 
 	headers := d.headers
 	found := false
@@ -103,11 +103,11 @@ func TestReplaceHeader(t *testing.T) {
 }
 
 func TestReplaceFooter(t *testing.T) {
-	d := loadFile(testFile)
+	d := LoadFile(testFile)
 	d.ReplaceFooter("This is a footer.", "newFooter")
 	d.WriteToFile(testFileResult)
 
-	d = loadFile(testFileResult)
+	d = LoadFile(testFileResult)
 
 	footers := d.footers
 	found := false
